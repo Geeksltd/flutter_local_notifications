@@ -742,10 +742,10 @@ static FlutterError *getFlutterError(NSError *error) {
 
         // 1. Get sender details from platform specifics
         NSString *senderDisplayName = platformSpecifics[SENDER_DISPLAY_NAME];
-        NSString *personAvatarPath = platformSpecifics[PERSON_AVATAR_PATH];
+        NSString *personAvatarPath = platformSpecifics[SENDER_AVATAR];
 
         if ([self containsKey:SENDER_DISPLAY_NAME forDictionary:platformSpecifics] &&
-            [self containsKey:PERSON_AVATAR_PATH forDictionary:platformSpecifics]) {
+            [self containsKey:SENDER_AVATAR forDictionary:platformSpecifics]) {
 
             INImage *senderAvatar = nil;
 
