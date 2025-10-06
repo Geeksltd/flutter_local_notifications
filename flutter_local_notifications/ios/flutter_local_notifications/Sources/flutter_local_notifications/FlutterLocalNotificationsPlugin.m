@@ -775,7 +775,7 @@ static FlutterError *getFlutterError(NSError *error) {
             // 4. Create INSendMessageIntent
             INSendMessageIntent *intent = [[INSendMessageIntent alloc]
                     initWithRecipients:@[ senderPerson ] // The message sender
-                   outgoingMessageType:INOutgoingMessageTypeText
+                   outgoingMessageType:INOutgoingMessageTypeUnknown
                                content:content.body
                     speakableGroupName:nil
                 conversationIdentifier:content.threadIdentifier ?: [arguments[ID] stringValue] // Use threadIdentifier for grouping/conversation
@@ -786,13 +786,14 @@ static FlutterError *getFlutterError(NSError *error) {
             // 5. Update UNMutableNotificationContent with the Intent
             // Use try/catch for safety, though Objective-C methods return NSError
             NSError *error = nil;
-            UNNotificationContent *updatedContent = [content updatedContentWith:intent error:&error];
+            // Use the correct method name: contentByUpdatingWithProvider:error:
+            UNNotificationContent *updatedContent = [content contentByUpdatingWithProvider:intent error:&error]; // FIXED
 
             if (updatedContent != nil) {
+                // Cast the updated immutable content back to the mutable type for assignment
                 content = (UNMutableNotificationContent *)updatedContent;
             } else {
                 NSLog(@"[FlutterLocalNotifications] Failed to create INSendMessageIntent: %@", error.localizedDescription);
-                // Fallback to standard content is automatic if the update fails
             }
         }
     }
