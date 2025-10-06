@@ -742,10 +742,10 @@ static FlutterError *getFlutterError(NSError *error) {
 
         // 1. Get sender details from platform specifics
         NSString *senderDisplayName = platformSpecifics[SENDER_DISPLAY_NAME];
-        NSString *personAvatarPath = platformSpecifics[SENDER_AVATAR];
+        NSString *personAvatarPath = platformSpecifics[PERSON_AVATAR_PATH];
 
         if ([self containsKey:SENDER_DISPLAY_NAME forDictionary:platformSpecifics] &&
-            [self containsKey:SENDER_AVATAR forDictionary:platformSpecifics]) {
+            [self containsKey:PERSON_AVATAR_PATH forDictionary:platformSpecifics]) {
 
             INImage *senderAvatar = nil;
 
@@ -773,26 +773,26 @@ static FlutterError *getFlutterError(NSError *error) {
                           suggestionType:INPersonSuggestionTypeNone];
 
             // 4. Create INSendMessageIntent
-            // Using INOutgoingMessageTypeUnknown to resolve the potential semantic issue (R2)
             INSendMessageIntent *intent = [[INSendMessageIntent alloc]
-                    initWithRecipients:@[ senderPerson ]
-                   outgoingMessageType:INOutgoingMessageTypeUnknown
+                    initWithRecipients:@[ senderPerson ] // The message sender
+                   outgoingMessageType:INOutgoingMessageTypeText
                                content:content.body
                     speakableGroupName:nil
-                conversationIdentifier:content.threadIdentifier ?: [arguments[ID] stringValue]
+                conversationIdentifier:content.threadIdentifier ?: [arguments[ID] stringValue] // Use threadIdentifier for grouping/conversation
                            serviceName:nil
                                 sender:senderPerson
                            attachments:nil];
 
             // 5. Update UNMutableNotificationContent with the Intent
-            // Use the proper UNNotificationContent * return type for the method
+            // Use try/catch for safety, though Objective-C methods return NSError
             NSError *error = nil;
-            UNNotificationContent *updatedContent = [content updatedContentWithIntent:intent error:&error]; // <-- CORRECTED METHOD NAME
+            UNNotificationContent *updatedContent = [content updatedContentWith:intent error:&error];
 
             if (updatedContent != nil) {
                 content = (UNMutableNotificationContent *)updatedContent;
             } else {
                 NSLog(@"[FlutterLocalNotifications] Failed to create INSendMessageIntent: %@", error.localizedDescription);
+                // Fallback to standard content is automatic if the update fails
             }
         }
     }
