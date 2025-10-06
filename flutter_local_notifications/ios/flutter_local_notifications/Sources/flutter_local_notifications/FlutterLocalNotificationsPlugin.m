@@ -2,6 +2,7 @@
 #import "./include/flutter_local_notifications/ActionEventSink.h"
 #import "./include/flutter_local_notifications/FlutterEngineManager.h"
 #import "./include/flutter_local_notifications/FlutterLocalNotificationsConverters.h"
+#import <Intents/Intents.h>
 
 @implementation FlutterLocalNotificationsPlugin {
   FlutterMethodChannel *_channel;
@@ -108,6 +109,8 @@ NSString *const IS_PROVISIONAL_ENABLED = @"isProvisionalEnabled";
 NSString *const IS_CRITICAL_ENABLED = @"isCriticalEnabled";
 
 NSString *const CRITICAL_SOUND_VOLUME = @"criticalSoundVolume";
+NSString *const SENDER_AVATAR = @"senderAvatar";
+NSString *const SENDER_DISPLAY_NAME = @"senderDisplayName";
 
 typedef NS_ENUM(NSInteger, RepeatInterval) {
   EveryMinute,
@@ -733,6 +736,67 @@ static FlutterError *getFlutterError(NSError *error) {
   if (presentSound && content.sound == nil) {
     content.sound = UNNotificationSound.defaultSound;
   }
+
+    if (@available(iOS 15.0, *)) {
+        NSDictionary *platformSpecifics = arguments[PLATFORM_SPECIFICS];
+
+        // 1. Get sender details from platform specifics
+        NSString *senderDisplayName = platformSpecifics[SENDER_DISPLAY_NAME];
+        NSString *personAvatarPath = platformSpecifics[PERSON_AVATAR_PATH];
+
+        if ([self containsKey:SENDER_DISPLAY_NAME forDictionary:platformSpecifics] &&
+            [self containsKey:PERSON_AVATAR_PATH forDictionary:platformSpecifics]) {
+
+            INImage *senderAvatar = nil;
+
+            // 2. Load the image data from the provided local path
+            if (personAvatarPath != nil) {
+                NSURL *imageURL = [NSURL fileURLWithPath:personAvatarPath];
+                NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+
+                if (imageData != nil) {
+                    senderAvatar = [INImage imageWithImageData:imageData];
+                }
+            }
+
+            // 3. Create INPerson for the sender
+            INPersonHandle *senderHandle = [[INPersonHandle alloc] initWithValue:senderDisplayName type:INPersonHandleTypeUnknown];
+
+            INPerson *senderPerson = [[INPerson alloc]
+                    initWithPersonHandle:senderHandle
+                          nameComponents:nil // Optional: For complex name components
+                             displayName:senderDisplayName
+                                   image:senderAvatar // This is the avatar
+                       contactIdentifier:nil
+                        customIdentifier:nil
+                                    isMe:NO
+                          suggestionType:INPersonSuggestionTypeNone];
+
+            // 4. Create INSendMessageIntent
+            INSendMessageIntent *intent = [[INSendMessageIntent alloc]
+                    initWithRecipients:@[ senderPerson ] // The message sender
+                   outgoingMessageType:INOutgoingMessageTypeText
+                               content:content.body
+                    speakableGroupName:nil
+                conversationIdentifier:content.threadIdentifier ?: [arguments[ID] stringValue] // Use threadIdentifier for grouping/conversation
+                           serviceName:nil
+                                sender:senderPerson
+                           attachments:nil];
+
+            // 5. Update UNMutableNotificationContent with the Intent
+            // Use try/catch for safety, though Objective-C methods return NSError
+            NSError *error = nil;
+            UNNotificationContent *updatedContent = [content updatedContentWith:intent error:&error];
+
+            if (updatedContent != nil) {
+                content = (UNMutableNotificationContent *)updatedContent;
+            } else {
+                NSLog(@"[FlutterLocalNotifications] Failed to create INSendMessageIntent: %@", error.localizedDescription);
+                // Fallback to standard content is automatic if the update fails
+            }
+        }
+    }
+
   content.userInfo = [self buildUserDict:arguments[ID]
                                    title:content.title
                             presentAlert:presentAlert
