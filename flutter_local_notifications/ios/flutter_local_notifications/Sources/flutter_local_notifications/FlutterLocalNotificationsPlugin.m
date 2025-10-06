@@ -787,7 +787,7 @@ static FlutterError *getFlutterError(NSError *error) {
             // 5. Update UNMutableNotificationContent with the Intent
             // Use the proper UNNotificationContent * return type for the method
             NSError *error = nil;
-            UNNotificationContent *updatedContent = [content updatedContentWithIntent:intent error:&error]; // <-- CORRECTED METHOD NAME
+            UNNotificationContent *updatedContent = [content updatedContentWith:intent error:&error];
 
             if (updatedContent != nil) {
                 content = (UNMutableNotificationContent *)updatedContent;
