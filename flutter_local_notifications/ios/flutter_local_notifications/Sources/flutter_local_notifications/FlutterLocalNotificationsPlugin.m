@@ -760,7 +760,7 @@ static FlutterError *getFlutterError(NSError *error) {
             }
 
             // 3. Create INPerson for the sender
-            INPersonHandle *senderHandle = [[INPersonHandle alloc] initWithValue:senderDisplayName type:INPersonHandleTypeUnknown];
+            INPersonHandle *senderHandle = [[INPersonHandle alloc] initWithValue:[arguments[ID] stringValue] type:INPersonHandleTypeUnknown];
 
             INPerson *senderPerson = [[INPerson alloc]
                     initWithPersonHandle:senderHandle
@@ -774,7 +774,7 @@ static FlutterError *getFlutterError(NSError *error) {
 
             // 4. Create INSendMessageIntent
             INSendMessageIntent *intent = [[INSendMessageIntent alloc]
-                    initWithRecipients:@[ senderPerson ] // The message sender
+                    initWithRecipients:nil // The message sender
                    outgoingMessageType:INOutgoingMessageTypeUnknown
                                content:content.body
                     speakableGroupName:nil
