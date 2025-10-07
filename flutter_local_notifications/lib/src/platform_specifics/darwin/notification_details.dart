@@ -19,6 +19,8 @@ class DarwinNotificationDetails {
     this.categoryIdentifier,
     this.interruptionLevel,
     this.criticalSoundVolume,
+    this.senderAvatar,
+    this.senderDisplayName,
   });
 
   /// Indicates if an alert should be display when the notification is triggered
@@ -153,4 +155,21 @@ class DarwinNotificationDetails {
   /// On iOS, this property is only applicable to iOS 12.0 or newer.
   /// On macOS, this property is only applicable to macOS 10.14 or newer.
   final double? criticalSoundVolume;
+
+  /// The path to the image file that is used as the avatar for a message.
+  ///
+  /// For example, in a messaging app, this property could be the path to an
+  /// image file that contains the sender's avatar. The system displays the
+  /// avatar alongside the notification.
+  ///
+  /// This is only applicable to macOS 12.0 or newer.
+  final String? senderAvatar;
+
+  /// The display name for the person or entity sending this notification.
+  ///
+  /// For example, in a messaging app, this property could be the name of the
+  /// person who sent the message.
+  ///
+  /// This is only applicable to macOS 12.0 or newer.
+  final String? senderDisplayName;
 }
